@@ -4,7 +4,7 @@ import { authService } from '@/lib/services/auth.service';
 import { setAuthCookie } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
-export async function register(formData: FormData) {
+export async function register(prevState: any, formData: FormData) {
     const username = formData.get('username') as string;
     const email = formData.get('email') as string;
     const name = formData.get('name') as string;
@@ -39,7 +39,7 @@ export async function register(formData: FormData) {
 
     // Auto-login after successful registration
     if (result.user) {
-        await setAuthCookie(result.user);
+        await setAuthCookie(result.user.id);
     }
 
     redirect('/');
