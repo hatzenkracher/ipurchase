@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 export interface DeviceFilters {
     dateFrom?: string;
     dateTo?: string;
-    dateType?: 'createdAt' | 'saleDate';
+    dateType?: 'purchaseDate' | 'saleDate';
 }
 
 /**

@@ -9,7 +9,7 @@ interface DevicesPageProps {
     searchParams: Promise<{
         dateFrom?: string;
         dateTo?: string;
-        dateType?: 'createdAt' | 'saleDate';
+        dateType?: 'purchaseDate' | 'saleDate';
     }>;
 }
 
