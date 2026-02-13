@@ -1,58 +1,45 @@
-import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 async function main() {
-    console.log('🌱 Starting database seed...');
+  console.log('🌱 Starting database seed...')
 
-    // Create default admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+  // Check if admin already exists
+  const existingAdmin = await prisma.user.findUnique({
+    where: { username: 'admin' },
+  })
 
-    const adminUser = await prisma.user.upsert({
-        where: { username: 'admin' },
-        update: {},
-        create: {
-            id: 'default-admin-user',
-            username: 'admin',
-            password: hashedPassword,
-            name: 'Administrator',
-            email: null,
-        },
-    });
+  if (!existingAdmin) {
+    const hashedPassword = await bcrypt.hash('admin123', 10)
 
-    console.log('✅ Created admin user:', adminUser.username);
-    console.log('   Default password: admin123');
-    console.log('   ⚠️  IMPORTANT: Change this password after first login!');
+    await prisma.user.create({
+      data: {
+        id: 'default-admin-user',
+        username: 'admin',
+        password: hashedPassword,
+        name: 'Administrator',
+        email: null,
+      },
+    })
 
-    // Update all existing devices to belong to admin user
-    const deviceCount = await prisma.device.count();
-    if (deviceCount > 0) {
-        await prisma.device.updateMany({
-            where: { userId: null },
-            data: { userId: adminUser.id },
-        });
-        console.log(`✅ Linked ${deviceCount} existing devices to admin user`);
-    }
+    console.log('✅ Admin user created')
+    console.log('   Username: admin')
+    console.log('   Password: admin123')
+    console.log('   ⚠️ Change password after first login!')
+  } else {
+    console.log('ℹ️ Admin user already exists – skipping creation')
+  }
 
-    // Update company settings if exists
-    const settingsCount = await prisma.companySettings.count();
-    if (settingsCount > 0) {
-        await prisma.companySettings.updateMany({
-            where: { userId: null },
-            data: { userId: adminUser.id },
-        });
-        console.log(`✅ Linked ${settingsCount} company settings to admin user`);
-    }
-
-    console.log('🎉 Seed completed successfully!');
+  console.log('🎉 Seed completed successfully!')
 }
 
 main()
-    .catch((e) => {
-        console.error('❌ Seed failed:', e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+  .catch((error) => {
+    console.error('❌ Seed failed:', error)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
