@@ -1,5 +1,5 @@
 import prisma from '../db';
-import { Device, Prisma } from '@prisma/client';
+import { Device, Document, Prisma } from '@prisma/client';
 
 export interface DeviceFilters {
     dateFrom?: string;
@@ -25,22 +25,24 @@ export class DeviceRepository {
         // Apply date filters
         if (filters?.dateFrom || filters?.dateTo) {
             const dateField = filters?.dateType === 'saleDate' ? 'saleDate' : 'purchaseDate';
-            where[dateField] = {};
+            const dateFilter: Prisma.DateTimeNullableFilter | Prisma.DateTimeFilter = {};
 
             if (filters.dateFrom) {
-                where[dateField as 'saleDate' | 'purchaseDate']!.gte = new Date(filters.dateFrom);
+                dateFilter.gte = new Date(filters.dateFrom);
             }
 
             if (filters.dateTo) {
                 const endDate = new Date(filters.dateTo);
                 endDate.setHours(23, 59, 59, 999);
-                where[dateField as 'saleDate' | 'purchaseDate']!.lte = endDate;
+                dateFilter.lte = endDate;
             }
 
             // If filtering by saleDate, exclude devices without a saleDate
             if (dateField === 'saleDate') {
-                where[dateField]!.not = null;
+                (dateFilter as Prisma.DateTimeNullableFilter).not = null;
             }
+
+            where[dateField] = dateFilter as any;
         }
 
         // Apply status filter
@@ -57,7 +59,7 @@ export class DeviceRepository {
     /**
      * Find a single device by ID (user-scoped)
      */
-    async findById(deviceId: string, userId: string): Promise<Device | null> {
+    async findById(deviceId: string, userId: string): Promise<(Device & { documents: Document[] }) | null> {
         return prisma.device.findFirst({
             where: {
                 id: deviceId,

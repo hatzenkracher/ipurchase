@@ -1,5 +1,5 @@
 import { deviceRepository, DeviceFilters } from '../repositories/device.repository';
-import { Device, Prisma } from '@prisma/client';
+import { Device, Document, Prisma } from '@prisma/client';
 
 export type DeviceStatus = 'STOCK' | 'REPAIR' | 'SOLD';
 
@@ -44,7 +44,7 @@ export class DeviceService {
     /**
      * Get a single device by ID
      */
-    async getDevice(userId: string, deviceId: string): Promise<Device | null> {
+    async getDevice(userId: string, deviceId: string): Promise<(Device & { documents: Document[] }) | null> {
         return deviceRepository.findById(deviceId, userId);
     }
 
